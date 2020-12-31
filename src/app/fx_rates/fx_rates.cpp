@@ -14,11 +14,11 @@ LV_FONT_DECLARE(Ubuntu_48px);
 SynchronizedApplication fxratesApp;
 JsonConfig config("fx-rates.json");
 
-String apiKey, mainPair, secondPair;
-String mainPairValue, secondPairValue, updatedAt;
-Label lblCurrency1, lblCurrency2, lblUpdatedAt;
+String fxApiKey, mainPair, secondPair;
+String mainPairValue, secondPairValue, fxUpdatedAt;
+Label lblCurrency1, lblCurrency2, lblFxUpdatedAt;
 
-Style big;
+Style fxStyleBig;
 
 /*
  * setup routine for application
@@ -35,8 +35,8 @@ void fxrates_app_setup() {
 
     // Executed when user click "refresh" button or when a WiFi connection is established
     fxratesApp.synchronizeActionHandler([](SyncRequestSource source) {
-        auto result = fetch_fx_rates(apiKey, mainPair, secondPair);
-        lblUpdatedAt.text(updatedAt);
+        auto result = fetch_fx_rates(fxApiKey, mainPair, secondPair);
+        lblFxUpdatedAt.text(fxUpdatedAt);
         if (result)
         {
             fxratesApp.icon().widgetText(mainPairValue);
@@ -69,8 +69,8 @@ bool fxrates_wifictl_event_cb(EventBits_t event, void *arg) {
 
 void build_main_page()
 {
-    big = Style::Create(mainbar_get_style(), true);
-    big.textFont(&Ubuntu_48px)
+    fxStyleBig = Style::Create(mainbar_get_style(), true);
+    fxStyleBig.textFont(&Ubuntu_48px)
       .textOpacity(LV_OPA_80);
 
     AppPage& screen = fxratesApp.mainPage(); // This is parent for all main screen widgets
@@ -78,17 +78,17 @@ void build_main_page()
     lblCurrency1 = Label(&screen);
     lblCurrency1.text(mainPair)
         .alignText(LV_LABEL_ALIGN_CENTER)
-        .style(big, true)
+        .style(fxStyleBig, true)
         .alignInParentCenter(0, -30);
 
     lblCurrency2 = Label(&screen);
     lblCurrency2.text(secondPairValue)
         .alignText(LV_LABEL_ALIGN_CENTER)
-        .style(big, true)
+        .style(fxStyleBig, true)
         .alignOutsideBottomMid(lblCurrency1);
 
-    lblUpdatedAt = Label(&screen);
-    lblUpdatedAt.text("loading...")
+    lblFxUpdatedAt = Label(&screen);
+    lblFxUpdatedAt.text("loading...")
         .alignText(LV_LABEL_ALIGN_LEFT)
         .alignInParentTopLeft(5, 5);
 }
@@ -96,7 +96,7 @@ void build_main_page()
 void build_settings()
 {
     // Create full options list and attach items to variables
-    config.addString("apikey", 32).assign(&apiKey);
+    config.addString("apikey", 32).assign(&fxApiKey);
     config.addString("pair1", 12, "EUR_USD").assign(&mainPair);
     config.addString("pair2", 12).assign(&secondPair);
     config.addBoolean("widget", false);
@@ -121,7 +121,7 @@ bool fetch_fx_rates(String apiKey, String pair1, String pair2) {
 
     JsonRequest request(320);
     if (!request.process(url)) {
-        updatedAt = request.errorString();
+        fxUpdatedAt = request.errorString();
         return false;
     }
 
@@ -132,7 +132,7 @@ bool fetch_fx_rates(String apiKey, String pair1, String pair2) {
         p2 = request[secondPair].as<float>();
         secondPairValue = String(p2, 2);
     }
-    updatedAt = request.fromatCompletedAt("Upd: %d.%m %M:%S");
+    fxUpdatedAt = request.formatCompletedAt("Upd: %d.%m %M:%S");
     //log_i("fx rates: %d = %f, %f", doc.size(), p1, p2);
 
     return true;
